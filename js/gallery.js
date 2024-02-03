@@ -64,57 +64,43 @@ const images = [
       description: "Lighthouse Coast Sea",
     },
   ];
+  const gallery = document.querySelector(".gallery");
 
-  const galleryElement = document.querySelector(".gallery");
-  let lightboxInstance;
-  let isModalVisible = false;
-  
-  function createGalleryItemMarkup({ preview, original, description }) {
-    return `
-      <li class="gallery-item">
-        <a class="gallery-link" href="${original}">
-          <img
-            class="gallery-image"
-            src="${preview}"
-            data-source="${original}"
-            alt="${description}"
-          />
-        </a>
-      </li>`;
-  }
-  
-  const galleryMarkup = images.map(createGalleryItemMarkup).join("");
-  galleryElement.innerHTML = galleryMarkup;
-  
-  function createModalMarkup(source) {
-    return `
-      <div class="modal">
-        <img src="${source}" width="1112" height="640">
-      </div>`;
-  }
-  
-  function initializeLightbox(markup) {
-    lightboxInstance = basicLightbox.create(markup, {
-      onShow: () => (isModalVisible = true),
-      onClose: () => (isModalVisible = false),
-      closable: true,
+const items = images.map(({ preview, original, description }) => {
+    const item = document.createElement("li");
+    item.classList.add("gallery-item");
+    const link = document.createElement("a");
+    link.addEventListener("click", (evt) => evt.preventDefault());
+    link.classList.add("gallery-link");
+    link.setAttribute("href", original);
+    const img = document.createElement("img");
+    img.classList.add("gallery-image");
+    img.setAttribute("src", preview);
+    img.dataset.source = original;
+    img.setAttribute("alt", description);
+    img.setAttribute("width", "360");
+    img.setAttribute("height", "200");
+    link.append(img);
+    item.append(link);
+    return item
+})
+gallery.append(...items);
+
+
+gallery.addEventListener("click", (evt) => {
+  if (evt.target.nodeName === "IMG") {
+    const instanceBtnClosing = (evt) => {
+      if (evt.keyCode === 27) instance.close();
+    }
+    const instance = basicLightbox.create(
+      `<img class="modal-img" src="${evt.target.dataset.source}" alt="${evt.target.getAttribute("alt")}" width="1112" height="640">`, {
+      onShow: () => {
+        window.addEventListener("keydown", instanceBtnClosing);
+      },
+      onClose: () => {
+        window.removeEventListener("keydown", instanceBtnClosing)
+      }
     });
-  
-    lightboxInstance.show();
+    instance.show();
   }
-  
-  galleryElement.addEventListener("click", (event) => {
-    event.preventDefault();
-    const targetImg = event.target.closest("img");
-  
-    if (targetImg) {
-      const modalMarkup = createModalMarkup(targetImg.dataset.source);
-      initializeLightbox(modalMarkup);
-    }
-  });
-  
-  document.addEventListener("keydown", (event) => {
-    if (event.code === "Escape" && isModalVisible) {
-      lightboxInstance.close();
-    }
-  });
+});
